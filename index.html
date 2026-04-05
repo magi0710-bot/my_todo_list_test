@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1714">
+<title>待辦清單</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1a1714;
+    --surface: #232017;
+    --border: #2e2925;
+    --text: #e8ddd0;
+    --muted: #8a7d72;
+    --dim: #4a4239;
+    --accent: #c8b8a2;
+    --red: #e07a5f;
+    --green: #81b29a;
+    --yellow: #f2cc8f;
+    --blue: #6ab0c5;
+    --purple: #9b8ec4;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif TC', Georgia, serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    min-height: 100vh;
+  }
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 0 env(safe-area-inset-bottom, 20px);
+  }
+  .app { width: 100%; max-width: 480px; padding: 48px 20px 120px; }
+
+  /* Header */
+  .header { margin-bottom: 32px; }
+  .eyebrow { font-size: 10px; letter-spacing: 0.35em; color: var(--dim); text-transform: uppercase; margin-bottom: 6px; }
+  .title { font-family: 'DM Serif Display', serif; font-size: 44px; font-weight: 400; color: var(--text); line-height: 1.05; letter-spacing: -0.02em; }
+
+  /* Progress */
+  .progress-wrap { margin-top: 20px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 8px; }
+  .progress-meta span:last-child { color: var(--accent); }
+  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--red)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+
+  /* Input card */
+  .input-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 24px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+  .todo-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 16px; font-family: inherit; min-width: 0; }
+  .todo-input::placeholder { color: var(--dim); }
+  .add-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); border: none; cursor: pointer; font-size: 24px; color: var(--bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, transform 0.1s; }
+  .add-btn:active { transform: scale(0.92); background: var(--text); }
+
+  /* Chip rows */
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chip-row:last-child { margin-bottom: 0; }
+  .chip { padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .chip.sel-work     { border-color: var(--red);    background: rgba(224,122,95,.15);  color: var(--red); }
+  .chip.sel-personal { border-color: var(--green);  background: rgba(129,178,154,.15); color: var(--green); }
+  .chip.sel-urgent   { border-color: var(--yellow); background: rgba(242,204,143,.15); color: var(--yellow); }
+  .chip.sel-thisweek { border-color: var(--purple); background: rgba(155,142,196,.15); color: var(--purple); }
+  .chip.sel-nextweek { border-color: var(--blue);   background: rgba(106,176,197,.15); color: var(--blue); }
+
+  /* Filter bar */
+  .filter-bar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .filter-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--dim); padding: 8px 12px; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; font-family: inherit; margin-bottom: -1px; transition: color 0.2s; }
+  .filter-btn.active { border-bottom-color: var(--accent); color: var(--accent); }
+
+  /* Tab rows */
+  .tab-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab { padding: 5px 13px; border-radius: 7px; border: none; background: transparent; color: var(--dim); font-size: 11px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+  .tab.active { background: var(--border); color: var(--text); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Todo list */
+  .todo-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .section-hd { font-size: 10px; letter-spacing: 0.25em; color: var(--dim); text-transform: uppercase; padding: 12px 2px 6px; }
+  .section-hd:first-child { padding-top: 0; }
+
+  .done-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 12px; }
+  .done-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .done-divider-label { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+
+  .todo-item { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); transition: opacity 0.3s, transform 0.3s; }
+  .todo-item.removing { opacity: 0; transform: translateX(24px); }
+  .todo-item.status-done { opacity: 0.55; }
+
+  /* Status button — 3-state */
+  .status-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; position: relative; }
+  .status-btn svg { display: none; }
+
+  /* inprogress: coloured dot inside */
+  .status-btn.inprogress { }
+  .status-btn.inprogress::after { content: ''; width: 8px; height: 8px; border-radius: 50%; position: absolute; }
+
+  /* done: filled ring + checkmark */
+  .status-btn.done svg { display: block; }
+
+  /* per-category colour */
+  .status-btn.cat-work.inprogress   { border-color: var(--red); }
+  .status-btn.cat-work.inprogress::after { background: var(--red); }
+  .status-btn.cat-work.done         { border-color: var(--red); background: rgba(224,122,95,.2); }
+
+  .status-btn.cat-personal.inprogress   { border-color: var(--green); }
+  .status-btn.cat-personal.inprogress::after { background: var(--green); }
+  .status-btn.cat-personal.done         { border-color: var(--green); background: rgba(129,178,154,.2); }
+
+  .status-btn.cat-urgent.inprogress   { border-color: var(--yellow); }
+  .status-btn.cat-urgent.inprogress::after { background: var(--yellow); }
+  .status-btn.cat-urgent.done         { border-color: var(--yellow); background: rgba(242,204,143,.2); }
+
+  /* Item content */
+  .todo-content { flex: 1; min-width: 0; }
+  .todo-text { font-size: 15px; color: var(--text); line-height: 1.45; word-break: break-word; transition: color 0.2s; }
+  .todo-text.done { color: var(--dim); text-decoration: line-through; }
+
+  .todo-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .cat-label { font-size: 10px; letter-spacing: 0.1em; }
+  .cat-label.work     { color: var(--red); }
+  .cat-label.personal { color: var(--green); }
+  .cat-label.urgent   { color: var(--yellow); }
+
+  .status-label { font-size: 9px; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 10px; }
+  .status-label.pending    { background: rgba(200,184,162,.1);  color: var(--muted); }
+  .status-label.inprogress { background: rgba(224,122,95,.15);  color: var(--red); }
+  .status-label.done       { background: rgba(129,178,154,.15); color: var(--green); }
+
+  .week-badge { font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 10px; }
+  .week-badge.thisweek { background: rgba(155,142,196,.2); color: var(--purple); }
+  .week-badge.nextweek { background: rgba(106,176,197,.2); color: var(--blue); }
+
+  .sep { color: var(--border); font-size: 10px; }
+  .todo-time { font-size: 10px; color: var(--dim); letter-spacing: 0.04em; }
+
+  .del-btn { background: transparent; border: none; color: var(--border); cursor: pointer; font-size: 20px; line-height: 1; flex-shrink: 0; padding: 2px 4px; transition: color 0.2s; }
+  .del-btn:active { color: var(--red); }
+
+  .empty { text-align: center; color: var(--dim); font-size: 14px; padding: 48px 0; letter-spacing: 0.05em; }
+
+  /* Footer */
+  .footer { margin-top: 20px; text-align: right; }
+  .clear-btn { background: transparent; border: none; color: var(--dim); font-size: 11px; letter-spacing: 0.1em; cursor: pointer; font-family: inherit; }
+  .clear-btn:active { color: var(--red); }
+
+  /* PWA hint */
+  .pwa-hint { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom,0px)); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 99; }
+  .pwa-hint.show { opacity: 1; pointer-events: auto; }
+  .pwa-hint button { background: none; border: none; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 11px; padding: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="eyebrow">今日事項</div>
+    <h1 class="title">待辦清單</h1>
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>完成進度</span><span id="prog-label">0 / 0</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="input-card">
+    <div class="input-row">
+      <input class="todo-input" id="todo-input" placeholder="新增一件事..." maxlength="100" autocomplete="off">
+      <button class="add-btn" id="add-btn">+</button>
+    </div>
+    <div class="chip-row" id="week-chips">
+      <button class="chip sel-thisweek" data-week="thisweek">本週</button>
+      <button class="chip" data-week="nextweek">下週</button>
+    </div>
+    <div class="chip-row" id="cat-chips">
+      <button class="chip sel-work" data-cat="work">工作</button>
+      <button class="chip" data-cat="personal">個人</button>
+      <button class="chip" data-cat="urgent">緊急</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn" data-filter="pending">待開始</button>
+    <button class="filter-btn" data-filter="inprogress">進行中</button>
+    <button class="filter-btn" data-filter="done">已完成</button>
+  </div>
+
+  <div class="tab-row" id="cat-tabs">
+    <button class="tab active" data-cattab="all">全部</button>
+    <button class="tab" data-cattab="work"><span class="dot" style="background:var(--red)"></span>工作</button>
+    <button class="tab" data-cattab="personal"><span class="dot" style="background:var(--green)"></span>個人</button>
+    <button class="tab" data-cattab="urgent"><span class="dot" style="background:var(--yellow)"></span>緊急</button>
+  </div>
+
+  <div class="tab-row" id="week-tabs">
+    <button class="tab active" data-weektab="all">所有週</button>
+    <button class="tab" data-weektab="thisweek"><span class="dot" style="background:var(--purple)"></span>本週</button>
+    <button class="tab" data-weektab="nextweek"><span class="dot" style="background:var(--blue)"></span>下週</button>
+  </div>
+
+  <div class="todo-list" id="todo-list"></div>
+
+  <div class="footer" id="footer" style="display:none">
+    <button class="clear-btn" id="clear-done">清除已完成</button>
+  </div>
+</div>
+
+<div class="pwa-hint" id="pwa-hint">
+  📱 加入主畫面即可像 App 使用
+  <button id="pwa-dismiss">好的</button>
+</div>
+
+<script>
+const STORAGE_KEY   = 'todo_app_v2';
+const CAT_LABELS    = { work:'工作', personal:'個人', urgent:'緊急' };
+const CAT_COLORS    = { work:'var(--red)', personal:'var(--green)', urgent:'var(--yellow)' };
+const WEEK_LABELS   = { thisweek:'本週', nextweek:'下週' };
+const STATUS_LABELS = { pending:'待開始', inprogress:'進行中', done:'已完成' };
+const STATUS_CYCLE  = { pending:'inprogress', inprogress:'done', done:'pending' };
+
+let todos = [], selCat = 'work', selWeek = 'thisweek';
+let activeFilter = 'all', activeCatTab = 'all', activeWeekTab = 'all';
+
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); } catch(e){} }
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('todo_app_v1');
+    if (raw) {
+      todos = JSON.parse(raw).map(t => ({
+        ...t,
+        status: t.status || (t.done ? 'done' : 'pending'),
+        week: t.week || 'thisweek'
+      }));
+    }
+  } catch(e) { todos = []; }
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function timeAgo(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return '剛剛';
+  if (d < 3600000) return Math.floor(d/60000)+'分鐘前';
+  if (d < 86400000) return Math.floor(d/3600000)+'小時前';
+  return Math.floor(d/86400000)+'天前';
+}
+
+function itemHTML(t) {
+  const btnCls = `status-btn ${t.status} cat-${t.category}`;
+  const col = CAT_COLORS[t.category];
+  return `
+  <div class="todo-item status-${t.status}" id="item-${t.id}">
+    <button class="${btnCls}" data-cycle="${t.id}">
+      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="todo-content">
+      <div class="todo-text ${t.status==='done'?'done':''}">${esc(t.text)}</div>
+      <div class="todo-meta">
+        <span class="cat-label ${t.category}">${CAT_LABELS[t.category]}</span>
+        <span class="sep">·</span>
+        <span class="status-label ${t.status}">${STATUS_LABELS[t.status]}</span>
+        <span class="sep">·</span>
+        <span class="week-badge ${t.week}">${WEEK_LABELS[t.week]||''}</span>
+        <span class="sep">·</span>
+        <span class="todo-time">${timeAgo(t.createdAt)}</span>
+      </div>
+    </div>
+    <button class="del-btn" data-del="${t.id}">×</button>
+  </div>`;
+}
+
+function groupByWeek(items) {
+  if (activeWeekTab !== 'all') return items.map(itemHTML).join('');
+  const tw = items.filter(t => t.week === 'thisweek');
+  const nw = items.filter(t => t.week === 'nextweek');
+  let h = '';
+  if (tw.length) h += '<div class="section-hd">本週</div>' + tw.map(itemHTML).join('');
+  if (nw.length) h += '<div class="section-hd">下週</div>' + nw.map(itemHTML).join('');
+  return h;
+}
+
+function render() {
+  const list = document.getElementById('todo-list');
+
+  const base = todos.filter(t => {
+    const c = activeCatTab  === 'all' || t.category === activeCatTab;
+    const w = activeWeekTab === 'all' || t.week     === activeWeekTab;
+    const s = activeFilter  === 'all' || t.status   === activeFilter;
+    return c && w && s;
+  });
+
+  // progress
+  const doneN = todos.filter(t => t.status === 'done').length;
+  const pct = todos.length ? Math.round(doneN/todos.length*100) : 0;
+  document.getElementById('prog-label').textContent = `${doneN} / ${todos.length}`;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('footer').style.display = todos.some(t => t.status==='done') ? '' : 'none';
+
+  if (!base.length) { list.innerHTML = '<div class="empty">這裡空空的 ✦</div>'; return; }
+
+  const active = base.filter(t => t.status !== 'done');
+  const done   = base.filter(t => t.status === 'done');
+
+  let html = active.length ? groupByWeek(active) : '';
+
+  if (done.length) {
+    html += `<div class="done-divider">
+      <div class="done-divider-line"></div>
+      <div class="done-divider-label">已完成 ${done.length}</div>
+      <div class="done-divider-line"></div>
+    </div>`;
+    html += done.map(itemHTML).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+function addTodo() {
+  const inp = document.getElementById('todo-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  todos.unshift({ id: Date.now(), text, status:'pending', category:selCat, week:selWeek, createdAt:Date.now() });
+  save(); render(); inp.value = ''; inp.focus();
+}
+
+document.getElementById('add-btn').addEventListener('click', addTodo);
+document.getElementById('todo-input').addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
+
+document.getElementById('week-chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-week]'); if (!b) return;
+  selWeek = b.dataset.week;
+  document.querySelectorAll('[data-week]').forEach(x => { x.className='chip'; if (x.dataset.week===selWeek) x.classList.add('sel-'+selWeek); });
+});
+
+document.getElementById('cat-chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]'); if (!b) return;
+  selCat = b.dataset.cat;
+  document.querySelectorAll('[data-cat]').forEach(x => { x.className='chip'; if (x.dataset.cat===selCat) x.classList.add('sel-'+selCat); });
+});
+
+document.querySelector('.filter-bar').addEventListener('click', e => {
+  const b = e.target.closest('[data-filter]'); if (!b) return;
+  activeFilter = b.dataset.filter;
+  document.querySelectorAll('[data-filter]').forEach(x => x.classList.toggle('active', x.dataset.filter===activeFilter));
+  render();
+});
+
+document.getElementById('cat-tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-cattab]'); if (!b) return;
+  activeCatTab = b.dataset.cattab;
+  document.querySelectorAll('[data-cattab]').forEach(x => x.classList.toggle('active', x.dataset.cattab===activeCatTab));
+  render();
+});
+
+document.getElementById('week-tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-weektab]'); if (!b) return;
+  activeWeekTab = b.dataset.weektab;
+  document.querySelectorAll('[data-weektab]').forEach(x => x.classList.toggle('active', x.dataset.weektab===activeWeekTab));
+  render();
+});
+
+document.getElementById('todo-list').addEventListener('click', e => {
+  const cb = e.target.closest('[data-cycle]');
+  const db = e.target.closest('[data-del]');
+  if (cb) {
+    const id = Number(cb.dataset.cycle);
+    todos = todos.map(t => t.id===id ? {...t, status:STATUS_CYCLE[t.status]} : t);
+    save(); render();
+  }
+  if (db) {
+    const id = Number(db.dataset.del);
+    const el = document.getElementById('item-'+id);
+    if (el) { el.classList.add('removing'); setTimeout(() => { todos=todos.filter(t=>t.id!==id); save(); render(); }, 280); }
+  }
+});
+
+document.getElementById('clear-done').addEventListener('click', () => {
+  todos = todos.filter(t => t.status !== 'done'); save(); render();
+});
+
+const pwaHint = document.getElementById('pwa-hint');
+const isApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+if (!isApp && !localStorage.getItem('pwa_hint_dismissed')) setTimeout(() => pwaHint.classList.add('show'), 2000);
+document.getElementById('pwa-dismiss').addEventListener('click', () => {
+  pwaHint.classList.remove('show'); localStorage.setItem('pwa_hint_dismissed','1');
+});
+
+load(); render();
+</script>
+</body>
+</html>
