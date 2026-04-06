@@ -12,32 +12,14 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #1a1714;
-    --surface: #232017;
-    --border: #2e2925;
-    --text: #e8ddd0;
-    --muted: #8a7d72;
-    --dim: #4a4239;
-    --accent: #c8b8a2;
-    --red: #e07a5f;
-    --green: #81b29a;
-    --yellow: #f2cc8f;
-    --blue: #6ab0c5;
-    --purple: #9b8ec4;
+    --bg: #1a1714; --surface: #232017; --border: #2e2925;
+    --text: #e8ddd0; --muted: #8a7d72; --dim: #4a4239; --accent: #c8b8a2;
+    --red: #e07a5f; --green: #81b29a; --yellow: #f2cc8f;
+    --blue: #6ab0c5; --purple: #9b8ec4;
   }
 
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Serif TC', Georgia, serif;
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
-    min-height: 100vh;
-  }
-  body {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 0 0 env(safe-area-inset-bottom, 20px);
-  }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Noto Serif TC', Georgia, serif; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; min-height: 100vh; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 0 0 env(safe-area-inset-bottom, 20px); }
   .app { width: 100%; max-width: 480px; padding: 48px 20px 120px; }
 
   /* Header */
@@ -47,7 +29,7 @@
 
   /* Progress */
   .progress-wrap { margin-top: 20px; }
-  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 8px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
   .progress-meta span:last-child { color: var(--accent); }
   .progress-bar { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--red)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
@@ -60,7 +42,7 @@
   .add-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); border: none; cursor: pointer; font-size: 24px; color: var(--bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, transform 0.1s; }
   .add-btn:active { transform: scale(0.92); background: var(--text); }
 
-  /* Chip rows */
+  /* Chips */
   .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .chip-row:last-child { margin-bottom: 0; }
   .chip { padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; cursor: pointer; font-family: inherit; transition: all 0.2s; }
@@ -83,7 +65,6 @@
 
   /* Todo list */
   .todo-list { display: flex; flex-direction: column; gap: 8px; }
-
   .section-hd { font-size: 10px; letter-spacing: 0.25em; color: var(--dim); text-transform: uppercase; padding: 12px 2px 6px; }
   .section-hd:first-child { padding-top: 0; }
 
@@ -91,60 +72,66 @@
   .done-divider-line { flex: 1; height: 1px; background: var(--border); }
   .done-divider-label { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
 
-  .todo-item { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); transition: opacity 0.3s, transform 0.3s; }
+  /* Todo item */
+  .todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 12px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); transition: opacity 0.3s, transform 0.3s, box-shadow 0.2s; }
   .todo-item.removing { opacity: 0; transform: translateX(24px); }
   .todo-item.status-done { opacity: 0.55; }
+  .todo-item.dragging { opacity: 0.4; }
+  .todo-item.drag-over { box-shadow: 0 0 0 2px var(--accent); }
 
-  /* Status button — 3-state */
-  .status-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; position: relative; }
+  /* Status button */
+  .status-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.2s; position: relative; }
   .status-btn svg { display: none; }
-
-  /* inprogress: coloured dot inside */
-  .status-btn.inprogress { }
   .status-btn.inprogress::after { content: ''; width: 8px; height: 8px; border-radius: 50%; position: absolute; }
-
-  /* done: filled ring + checkmark */
   .status-btn.done svg { display: block; }
-
-  /* per-category colour */
   .status-btn.cat-work.inprogress   { border-color: var(--red); }
   .status-btn.cat-work.inprogress::after { background: var(--red); }
   .status-btn.cat-work.done         { border-color: var(--red); background: rgba(224,122,95,.2); }
-
   .status-btn.cat-personal.inprogress   { border-color: var(--green); }
   .status-btn.cat-personal.inprogress::after { background: var(--green); }
   .status-btn.cat-personal.done         { border-color: var(--green); background: rgba(129,178,154,.2); }
-
   .status-btn.cat-urgent.inprogress   { border-color: var(--yellow); }
   .status-btn.cat-urgent.inprogress::after { background: var(--yellow); }
   .status-btn.cat-urgent.done         { border-color: var(--yellow); background: rgba(242,204,143,.2); }
 
-  /* Item content */
-  .todo-content { flex: 1; min-width: 0; }
-  .todo-text { font-size: 15px; color: var(--text); line-height: 1.45; word-break: break-word; transition: color 0.2s; }
+  /* Item body */
+  .todo-body { flex: 1; min-width: 0; }
+  .todo-text { font-size: 15px; color: var(--text); line-height: 1.45; word-break: break-word; }
   .todo-text.done { color: var(--dim); text-decoration: line-through; }
+
+  /* Inline edit input */
+  .edit-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--accent); outline: none; color: var(--text); font-size: 15px; font-family: inherit; line-height: 1.45; padding-bottom: 2px; }
 
   .todo-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
   .cat-label { font-size: 10px; letter-spacing: 0.1em; }
-  .cat-label.work     { color: var(--red); }
+  .cat-label.work { color: var(--red); }
   .cat-label.personal { color: var(--green); }
-  .cat-label.urgent   { color: var(--yellow); }
-
+  .cat-label.urgent { color: var(--yellow); }
   .status-label { font-size: 9px; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 10px; }
   .status-label.pending    { background: rgba(200,184,162,.1);  color: var(--muted); }
   .status-label.inprogress { background: rgba(224,122,95,.15);  color: var(--red); }
   .status-label.done       { background: rgba(129,178,154,.15); color: var(--green); }
-
   .week-badge { font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 10px; }
   .week-badge.thisweek { background: rgba(155,142,196,.2); color: var(--purple); }
   .week-badge.nextweek { background: rgba(106,176,197,.2); color: var(--blue); }
-
   .sep { color: var(--border); font-size: 10px; }
-  .todo-time { font-size: 10px; color: var(--dim); letter-spacing: 0.04em; }
+  .todo-time { font-size: 10px; color: var(--dim); }
 
-  .del-btn { background: transparent; border: none; color: var(--border); cursor: pointer; font-size: 20px; line-height: 1; flex-shrink: 0; padding: 2px 4px; transition: color 0.2s; }
-  .del-btn:active { color: var(--red); }
+  /* Action buttons (right side) */
+  .item-actions { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--dim); padding: 3px 4px; line-height: 1; font-size: 13px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; border-radius: 5px; }
+  .icon-btn:active, .icon-btn:hover { color: var(--accent); }
+  .icon-btn.del:active, .icon-btn.del:hover { color: var(--red); }
+  .icon-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn.move-btn { cursor: grab; }
+  .icon-btn.move-btn:active { cursor: grabbing; }
 
+  /* Edit mode: confirm/cancel row */
+  .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .edit-save-btn { padding: 4px 14px; border-radius: 8px; border: none; background: var(--accent); color: var(--bg); font-size: 12px; font-family: inherit; cursor: pointer; letter-spacing: 0.04em; }
+  .edit-cancel-btn { padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer; }
+
+  /* Empty */
   .empty { text-align: center; color: var(--dim); font-size: 14px; padding: 48px 0; letter-spacing: 0.05em; }
 
   /* Footer */
@@ -153,7 +140,7 @@
   .clear-btn:active { color: var(--red); }
 
   /* PWA hint */
-  .pwa-hint { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom,0px)); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 99; }
+  .pwa-hint { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom,0px)); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 11px; color: var(--muted); white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 99; }
   .pwa-hint.show { opacity: 1; pointer-events: auto; }
   .pwa-hint button { background: none; border: none; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 11px; padding: 0; }
 </style>
@@ -228,21 +215,22 @@ const STATUS_CYCLE  = { pending:'inprogress', inprogress:'done', done:'pending' 
 
 let todos = [], selCat = 'work', selWeek = 'thisweek';
 let activeFilter = 'all', activeCatTab = 'all', activeWeekTab = 'all';
+let editingId = null;
 
+/* ── Storage ── */
 function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); } catch(e){} }
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('todo_app_v1');
-    if (raw) {
-      todos = JSON.parse(raw).map(t => ({
-        ...t,
-        status: t.status || (t.done ? 'done' : 'pending'),
-        week: t.week || 'thisweek'
-      }));
-    }
+    if (raw) todos = JSON.parse(raw).map(t => ({
+      ...t,
+      status: t.status || (t.done ? 'done' : 'pending'),
+      week: t.week || 'thisweek'
+    }));
   } catch(e) { todos = []; }
 }
 
+/* ── Helpers ── */
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function timeAgo(ts) {
   const d = Date.now() - ts;
@@ -252,55 +240,76 @@ function timeAgo(ts) {
   return Math.floor(d/86400000)+'天前';
 }
 
-function itemHTML(t) {
+/* ── Icons (inline SVG strings) ── */
+const ICON_EDIT  = `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const ICON_UP    = `<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`;
+const ICON_DOWN  = `<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`;
+const ICON_DEL   = `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
+/* ── Item HTML ── */
+function itemHTML(t, idx, activeList) {
+  const isDone   = t.status === 'done';
+  const isActive = !isDone;
+  const isEditing = editingId === t.id;
   const btnCls = `status-btn ${t.status} cat-${t.category}`;
-  const col = CAT_COLORS[t.category];
+  const col    = CAT_COLORS[t.category];
+  const isFirst = idx === 0;
+  const isLast  = idx === activeList.length - 1;
+
+  const bodyContent = isEditing ? `
+    <input class="edit-input" id="edit-input-${t.id}" value="${esc(t.text)}" maxlength="100">
+    <div class="edit-actions">
+      <button class="edit-save-btn" data-save="${t.id}">儲存</button>
+      <button class="edit-cancel-btn" data-editcancel="${t.id}">取消</button>
+    </div>` : `
+    <div class="todo-text ${isDone?'done':''}">${esc(t.text)}</div>
+    <div class="todo-meta">
+      <span class="cat-label ${t.category}">${CAT_LABELS[t.category]}</span>
+      <span class="sep">·</span>
+      <span class="status-label ${t.status}">${STATUS_LABELS[t.status]}</span>
+      <span class="sep">·</span>
+      <span class="week-badge ${t.week}">${WEEK_LABELS[t.week]||''}</span>
+      <span class="sep">·</span>
+      <span class="todo-time">${timeAgo(t.createdAt)}</span>
+    </div>`;
+
+  const actions = isDone ? `
+    <div class="item-actions">
+    </div>` : `
+    <div class="item-actions">
+      ${!isEditing ? `<button class="icon-btn" data-edit="${t.id}" title="編輯">${ICON_EDIT}</button>` : ''}
+      <button class="icon-btn move-btn" data-up="${t.id}" title="上移" ${isFirst?'style="opacity:0.2;pointer-events:none"':''}>${ICON_UP}</button>
+      <button class="icon-btn move-btn" data-down="${t.id}" title="下移" ${isLast?'style="opacity:0.2;pointer-events:none"':''}>${ICON_DOWN}</button>
+    </div>`;
+
   return `
-  <div class="todo-item status-${t.status}" id="item-${t.id}">
+  <div class="todo-item status-${t.status}" id="item-${t.id}" draggable="${isActive && !isEditing}">
     <button class="${btnCls}" data-cycle="${t.id}">
       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
         <path d="M1 4L3.5 6.5L9 1" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
-    <div class="todo-content">
-      <div class="todo-text ${t.status==='done'?'done':''}">${esc(t.text)}</div>
-      <div class="todo-meta">
-        <span class="cat-label ${t.category}">${CAT_LABELS[t.category]}</span>
-        <span class="sep">·</span>
-        <span class="status-label ${t.status}">${STATUS_LABELS[t.status]}</span>
-        <span class="sep">·</span>
-        <span class="week-badge ${t.week}">${WEEK_LABELS[t.week]||''}</span>
-        <span class="sep">·</span>
-        <span class="todo-time">${timeAgo(t.createdAt)}</span>
-      </div>
-    </div>
-    <button class="del-btn" data-del="${t.id}">×</button>
+    <div class="todo-body">${bodyContent}</div>
+    ${actions}
   </div>`;
 }
 
-function groupByWeek(items) {
-  if (activeWeekTab !== 'all') return items.map(itemHTML).join('');
-  const tw = items.filter(t => t.week === 'thisweek');
-  const nw = items.filter(t => t.week === 'nextweek');
-  let h = '';
-  if (tw.length) h += '<div class="section-hd">本週</div>' + tw.map(itemHTML).join('');
-  if (nw.length) h += '<div class="section-hd">下週</div>' + nw.map(itemHTML).join('');
-  return h;
-}
-
-function render() {
-  const list = document.getElementById('todo-list');
-
-  const base = todos.filter(t => {
+/* ── Render ── */
+function getFiltered() {
+  return todos.filter(t => {
     const c = activeCatTab  === 'all' || t.category === activeCatTab;
     const w = activeWeekTab === 'all' || t.week     === activeWeekTab;
     const s = activeFilter  === 'all' || t.status   === activeFilter;
     return c && w && s;
   });
+}
 
-  // progress
+function render() {
+  const list   = document.getElementById('todo-list');
+  const base   = getFiltered();
+
   const doneN = todos.filter(t => t.status === 'done').length;
-  const pct = todos.length ? Math.round(doneN/todos.length*100) : 0;
+  const pct   = todos.length ? Math.round(doneN/todos.length*100) : 0;
   document.getElementById('prog-label').textContent = `${doneN} / ${todos.length}`;
   document.getElementById('prog-fill').style.width = pct + '%';
   document.getElementById('footer').style.display = todos.some(t => t.status==='done') ? '' : 'none';
@@ -310,6 +319,16 @@ function render() {
   const active = base.filter(t => t.status !== 'done');
   const done   = base.filter(t => t.status === 'done');
 
+  function groupByWeek(items) {
+    if (activeWeekTab !== 'all') return items.map((t,i) => itemHTML(t,i,items)).join('');
+    const tw = items.filter(t => t.week === 'thisweek');
+    const nw = items.filter(t => t.week === 'nextweek');
+    let h = '';
+    if (tw.length) h += '<div class="section-hd">本週</div>' + tw.map((t,i) => itemHTML(t,i,tw)).join('');
+    if (nw.length) h += '<div class="section-hd">下週</div>' + nw.map((t,i) => itemHTML(t,i,nw)).join('');
+    return h;
+  }
+
   let html = active.length ? groupByWeek(active) : '';
 
   if (done.length) {
@@ -317,21 +336,154 @@ function render() {
       <div class="done-divider-line"></div>
       <div class="done-divider-label">已完成 ${done.length}</div>
       <div class="done-divider-line"></div>
-    </div>`;
-    html += done.map(itemHTML).join('');
+    </div>` + done.map((t,i)=>itemHTML(t,i,[])).join('');
   }
 
   list.innerHTML = html;
+
+  // Focus edit input if editing
+  if (editingId) {
+    const inp = document.getElementById(`edit-input-${editingId}`);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+
+  setupDrag();
 }
 
+/* ── Add ── */
 function addTodo() {
   const inp = document.getElementById('todo-input');
   const text = inp.value.trim();
   if (!text) return;
-  todos.unshift({ id: Date.now(), text, status:'pending', category:selCat, week:selWeek, createdAt:Date.now() });
+  todos.unshift({ id: Date.now(), text, status:'pending', category:selCat, week:selWeek, createdAt: Date.now() });
   save(); render(); inp.value = ''; inp.focus();
 }
 
+/* ── Move up/down in master todos array ── */
+function moveInTodos(id, dir) {
+  // operate only within active (non-done) items visible in current filter
+  const base = getFiltered();
+  const activeVis = base.filter(t => t.status !== 'done');
+
+  // find in activeVis
+  const visIdx = activeVis.findIndex(t => t.id === id);
+  if (visIdx === -1) return;
+  const targetIdx = visIdx + dir;
+  if (targetIdx < 0 || targetIdx >= activeVis.length) return;
+
+  const aId = activeVis[visIdx].id;
+  const bId = activeVis[targetIdx].id;
+
+  // swap in master todos array
+  const ai = todos.findIndex(t => t.id === aId);
+  const bi = todos.findIndex(t => t.id === bId);
+  if (ai === -1 || bi === -1) return;
+  [todos[ai], todos[bi]] = [todos[bi], todos[ai]];
+  save(); render();
+}
+
+/* ── Drag-and-drop (touch + mouse) ── */
+let dragId = null;
+let dragOverId = null;
+
+function setupDrag() {
+  document.querySelectorAll('.todo-item[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', onDragStart);
+    el.addEventListener('dragover',  onDragOver);
+    el.addEventListener('drop',      onDrop);
+    el.addEventListener('dragend',   onDragEnd);
+    el.addEventListener('dragleave', onDragLeave);
+  });
+}
+
+function getDomId(el) {
+  const item = el.closest('.todo-item');
+  return item ? Number(item.id.replace('item-','')) : null;
+}
+
+function onDragStart(e) {
+  dragId = Number(this.id.replace('item-',''));
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const overId = Number(this.id.replace('item-',''));
+  if (overId !== dragId) {
+    document.querySelectorAll('.todo-item').forEach(x => x.classList.remove('drag-over'));
+    this.classList.add('drag-over');
+    dragOverId = overId;
+  }
+}
+function onDragLeave() { this.classList.remove('drag-over'); }
+function onDragEnd()   { render(); dragId = null; dragOverId = null; }
+function onDrop(e) {
+  e.preventDefault();
+  if (!dragId || !dragOverId || dragId === dragOverId) return;
+  const fromIdx = todos.findIndex(t => t.id === dragId);
+  const toIdx   = todos.findIndex(t => t.id === dragOverId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const [item] = todos.splice(fromIdx, 1);
+  todos.splice(toIdx, 0, item);
+  save(); render();
+}
+
+/* ── Event delegation on list ── */
+document.getElementById('todo-list').addEventListener('click', e => {
+  const cycleBtn  = e.target.closest('[data-cycle]');
+  const editBtn   = e.target.closest('[data-edit]');
+  const saveBtn   = e.target.closest('[data-save]');
+  const cancelBtn = e.target.closest('[data-editcancel]');
+  const delBtn    = e.target.closest('[data-del]');
+  const upBtn     = e.target.closest('[data-up]');
+  const downBtn   = e.target.closest('[data-down]');
+
+  if (cycleBtn && editingId === null) {
+    const id = Number(cycleBtn.dataset.cycle);
+    todos = todos.map(t => t.id===id ? {...t, status: STATUS_CYCLE[t.status]} : t);
+    save(); render();
+  }
+  if (editBtn) {
+    editingId = Number(editBtn.dataset.edit);
+    render();
+  }
+  if (saveBtn) {
+    const id  = Number(saveBtn.dataset.save);
+    const inp = document.getElementById(`edit-input-${id}`);
+    const val = inp ? inp.value.trim() : '';
+    if (val) todos = todos.map(t => t.id===id ? {...t, text: val} : t);
+    editingId = null;
+    save(); render();
+  }
+  if (cancelBtn) {
+    editingId = null;
+    render();
+  }
+  if (delBtn) {
+    const id = Number(delBtn.dataset.del);
+    const el = document.getElementById('item-'+id);
+    if (el) { el.classList.add('removing'); setTimeout(() => { todos=todos.filter(t=>t.id!==id); save(); render(); }, 280); }
+  }
+  if (upBtn)   moveInTodos(Number(upBtn.dataset.up),    -1);
+  if (downBtn) moveInTodos(Number(downBtn.dataset.down), 1);
+});
+
+// Save edit on Enter key
+document.getElementById('todo-list').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && editingId && e.target.classList.contains('edit-input')) {
+    const val = e.target.value.trim();
+    if (val) todos = todos.map(t => t.id===editingId ? {...t, text: val} : t);
+    editingId = null;
+    save(); render();
+  }
+  if (e.key === 'Escape' && editingId) {
+    editingId = null;
+    render();
+  }
+});
+
+/* ── Other events ── */
 document.getElementById('add-btn').addEventListener('click', addTodo);
 document.getElementById('todo-input').addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
 
@@ -340,53 +492,34 @@ document.getElementById('week-chips').addEventListener('click', e => {
   selWeek = b.dataset.week;
   document.querySelectorAll('[data-week]').forEach(x => { x.className='chip'; if (x.dataset.week===selWeek) x.classList.add('sel-'+selWeek); });
 });
-
 document.getElementById('cat-chips').addEventListener('click', e => {
   const b = e.target.closest('[data-cat]'); if (!b) return;
   selCat = b.dataset.cat;
   document.querySelectorAll('[data-cat]').forEach(x => { x.className='chip'; if (x.dataset.cat===selCat) x.classList.add('sel-'+selCat); });
 });
-
 document.querySelector('.filter-bar').addEventListener('click', e => {
   const b = e.target.closest('[data-filter]'); if (!b) return;
   activeFilter = b.dataset.filter;
   document.querySelectorAll('[data-filter]').forEach(x => x.classList.toggle('active', x.dataset.filter===activeFilter));
   render();
 });
-
 document.getElementById('cat-tabs').addEventListener('click', e => {
   const b = e.target.closest('[data-cattab]'); if (!b) return;
   activeCatTab = b.dataset.cattab;
   document.querySelectorAll('[data-cattab]').forEach(x => x.classList.toggle('active', x.dataset.cattab===activeCatTab));
   render();
 });
-
 document.getElementById('week-tabs').addEventListener('click', e => {
   const b = e.target.closest('[data-weektab]'); if (!b) return;
   activeWeekTab = b.dataset.weektab;
   document.querySelectorAll('[data-weektab]').forEach(x => x.classList.toggle('active', x.dataset.weektab===activeWeekTab));
   render();
 });
-
-document.getElementById('todo-list').addEventListener('click', e => {
-  const cb = e.target.closest('[data-cycle]');
-  const db = e.target.closest('[data-del]');
-  if (cb) {
-    const id = Number(cb.dataset.cycle);
-    todos = todos.map(t => t.id===id ? {...t, status:STATUS_CYCLE[t.status]} : t);
-    save(); render();
-  }
-  if (db) {
-    const id = Number(db.dataset.del);
-    const el = document.getElementById('item-'+id);
-    if (el) { el.classList.add('removing'); setTimeout(() => { todos=todos.filter(t=>t.id!==id); save(); render(); }, 280); }
-  }
-});
-
 document.getElementById('clear-done').addEventListener('click', () => {
   todos = todos.filter(t => t.status !== 'done'); save(); render();
 });
 
+// PWA
 const pwaHint = document.getElementById('pwa-hint');
 const isApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 if (!isApp && !localStorage.getItem('pwa_hint_dismissed')) setTimeout(() => pwaHint.classList.add('show'), 2000);
