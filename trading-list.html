@@ -299,6 +299,18 @@
     cursor: pointer;
     flex-shrink: 0;
   }
+  .btn-setup {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 12px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: none;
+  }
   .btn-save {
     flex: 1;
     background: linear-gradient(135deg, var(--accent2) 0%, #4e8ab8 100%);
@@ -820,12 +832,75 @@
 
 <div class="bottom-bar">
   <button class="btn-reset" onclick="resetAll()">↺ 重置</button>
-  <button class="btn-save" onclick="saveRecord()">儲存紀錄 & 複製 MD</button>
+  <button class="btn-setup" id="btnSetupDir" onclick="selectDefaultDirectory()" title="設定預設存檔目錄">📁 目錄</button>
+  <button class="btn-save" onclick="saveRecordWithFile()">儲存紀錄 & 存檔 MD</button>
 </div>
 
 <div id="toast"></div>
 
 <script>
+// ── IndexedDB 及路徑儲存 ──
+const dbName = "TradeLogStore";
+const storeName = "handles";
+
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName);
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function saveHandle(key, handle) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readwrite");
+            tx.objectStore(storeName).put(handle, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn("IndexedDB error", e);
+    }
+}
+
+async function getHandle(key) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readonly");
+            const request = tx.objectStore(storeName).get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.warn("IndexedDB error", e);
+        return null;
+    }
+}
+
+async function selectDefaultDirectory() {
+    try {
+        const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await saveHandle("defaultDir", dirHandle);
+        showToast("已設定預設儲存路徑", "success");
+        return dirHandle;
+    } catch (err) {
+        if (err.name !== "AbortError") {
+            console.error(err);
+            showToast("無法設定路徑", "error");
+        }
+        return null;
+    }
+}
+
 // ── 基礎邏輯 ──
 function toggle(el) {
   el.classList.toggle('checked');
@@ -892,6 +967,10 @@ function buildMarkdown() {
 let historyData = JSON.parse(localStorage.getItem('trade_history') || '[]');
 
 function saveRecord() {
+  saveRecordWithFile();
+}
+
+async function saveRecordWithFile() {
   const symbol = document.getElementById('symbolInput').value.trim();
   if (!symbol) {
     showToast('請輸入商品名稱', 'error');
@@ -915,13 +994,54 @@ function saveRecord() {
 
   historyData.unshift(currentState);
   localStorage.setItem('trade_history', JSON.stringify(historyData));
-  
-  // 複製到剪貼簿
-  navigator.clipboard.writeText(md).then(() => {
-    showToast('已複製 MD 並存入歷史', 'success');
-  });
-
   renderHistory();
+
+  // 嘗試儲存成實體檔案
+  const filename = `${symbol}_${dateStr}_${timeStr.replace(':', '')}.md`;
+  let savedToFile = false;
+
+  if ('showDirectoryPicker' in window) {
+      try {
+          let dirHandle = await getHandle("defaultDir");
+          if (!dirHandle) {
+              dirHandle = await selectDefaultDirectory();
+          }
+          
+          if (dirHandle) {
+              // 檢查與請求權限
+              if (await dirHandle.queryPermission({ mode: "readwrite" }) !== "granted") {
+                  if (await dirHandle.requestPermission({ mode: "readwrite" }) !== "granted") {
+                      throw new Error("Permission denied");
+                  }
+              }
+              const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+              const writable = await fileHandle.createWritable();
+              await writable.write(md);
+              await writable.close();
+              showToast("已存入歷史並儲存至預設路徑", "success");
+              savedToFile = true;
+          }
+      } catch (err) {
+          console.error("Direct save failed", err);
+      }
+  }
+
+  // Fallback 儲存機制（手機或未支援 API、未選擇目錄時）
+  if (!savedToFile) {
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("已存入歷史並觸發下載", "success");
+  }
+
+  // 背景複製到剪貼簿 (避免錯誤，不阻擋後續)
+  navigator.clipboard.writeText(md).catch(e => console.log('Clipboard save failed', e));
 }
 
 function renderHistory() {
@@ -999,6 +1119,10 @@ function showToast(msg, type) {
 }
 
 // ── 初始化 ──
+if ('showDirectoryPicker' in window) {
+    document.getElementById('btnSetupDir').style.display = 'inline-block';
+}
+
 renderHistory();
 updateProgress();
 
