@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>交易 Check List (本地強化版)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --accent: #c8a96e;
+    --accent2: #7eb8c8;
+    --accent3: #c87e7e;
+    --text: #e8e0d4;
+    --text-muted: #7a7268;
+    --check-yes: #6ebd8f;
+    --check-no: #2e2e2e;
+    --radius: 10px;
+    --section-gap: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    min-height: 100vh;
+    padding-bottom: 120px;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 10px;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-bar {
+    width: 100px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .symbol-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .symbol-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .symbol-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    outline: none;
+  }
+  .symbol-input:focus { border-color: var(--accent); }
+
+  main { padding: 16px; display: flex; flex-direction: column; gap: var(--section-gap); }
+
+  .phase-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .phase-label .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .phase-label span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card-title .icon { font-size: 16px; }
+
+  .card.amber  { border-left: 3px solid var(--accent); }
+  .card.blue   { border-left: 3px solid var(--accent2); }
+  .card.red    { border-left: 3px solid var(--accent3); }
+  .card.green  { border-left: 3px solid var(--check-yes); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 500px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .check-group { display: flex; flex-direction: column; gap: 6px; }
+  .check-sub { padding-left: 18px; }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    cursor: pointer;
+    user-select: none;
+    padding: 5px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .check-item:active { background: var(--surface2); }
+
+  .check-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    background: var(--check-no);
+  }
+  .check-box svg { display: none; width: 11px; height: 11px; }
+  .check-item.checked .check-box {
+    background: var(--check-yes);
+    border-color: var(--check-yes);
+  }
+  .check-item.checked .check-box svg { display: block; }
+
+  .check-item.required .check-label { color: var(--accent3); }
+  .check-item.required .check-box { border-color: var(--accent3); }
+
+  .check-label { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .check-item.checked .check-label { color: var(--text-muted); text-decoration: line-through; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  .field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .field-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+  .field-label.required-label { color: var(--accent3); }
+  .field-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    outline: none;
+    resize: vertical;
+    min-height: 40px;
+  }
+  .field-input:focus { border-color: var(--accent2); }
+
+  /* ── HISTORY STYLES ── */
+  .history-section {
+    margin-top: 30px;
+    border-top: 2px dashed var(--border);
+    padding-top: 20px;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .history-item:hover { border-color: var(--accent); }
+  .history-info { display: flex; flex-direction: column; gap: 4px; }
+  .history-symbol { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 700; }
+  .history-date { font-size: 11px; color: var(--text-muted); }
+  .history-actions { display: flex; gap: 8px; }
+  .action-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .action-btn.del { color: var(--accent3); }
+
+  .detail-view {
+    margin-top: 15px;
+    background: #000;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    display: none;
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--check-yes);
+  }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(15,15,15,0.97);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .btn-reset {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-setup {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 12px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: none;
+  }
+  .btn-save {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent2) 0%, #4e8ab8 100%);
+    border: none;
+    color: #0f0f0f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+  }
+
+  #toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 200;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: var(--check-yes); color: var(--check-yes); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">⬡ Trade Log Local</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-text" id="progressText">0/0</span>
+    </div>
+  </div>
+  <div class="symbol-row">
+    <span class="symbol-label">SYMBOL</span>
+    <input class="symbol-input" id="symbolInput" type="text" placeholder="BTCUSDT" maxlength="20">
+  </div>
+</header>
+
+<!-- 1. 看盤前儀式 -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#c8a96e"></div><span>Phase 01 — Pre-Market Ritual</span></div>
+    <div class="card amber">
+      <div class="card-title"><span class="icon">♥</span>看盤前儀式</div>
+      <div class="check-group">
+        <div class="check-item" onclick="toggle(this)" data-label="確認身心靈狀態">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">確認身心靈狀態</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="確認情緒穩定">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">確認情緒穩定</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="確認不受干擾">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">確認不受干擾</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="確認是否有宏觀經濟數據發布">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">確認是否有宏觀經濟數據發布</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 日線 -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#7eb8c8"></div><span>Phase 02 — Daily Chart</span></div>
+    <div class="grid2">
+      <div class="card blue">
+        <div class="card-title"><span class="icon">📅</span>日線核心條件</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="確認是否為交易日">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認是否為交易日</span>
+          </div>
+          <div class="check-item required" onclick="toggle(this)" data-label="偏向做多">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">偏向做多</span>
+          </div>
+          <div class="check-item required" onclick="toggle(this)" data-label="偏向做空">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">偏向做空</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認合理的止盈位置">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認合理的止盈位置</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="最近的支撐阻力">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">最近的支撐阻力</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="上月高低位">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">上月高低位</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card blue">
+        <div class="card-title"><span class="icon">📅</span>日線細項</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="強動能，延續操作">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">強動能，延續操作</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="反轉K棒，反向操作">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">反轉K棒，反向操作</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="丁型">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">丁型</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="吞噬">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">吞噬</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="包含">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">包含</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="晨星/夜星">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">晨星/夜星</span>
+            </div>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認附近是否有阻力">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認附近是否有阻力</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="日線阻力">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">日線</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="周線阻力">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">周線</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="月線阻力">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">月線</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 4H -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#9ec87e"></div><span>Phase 03 — 4H Chart</span></div>
+    <div class="grid2">
+      <div class="card green">
+        <div class="card-title"><span class="icon">≋</span>4H圖核心條件</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="確認4H的ema50位置">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認4H的ema50位置</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認有強動能釋放">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認有強動能釋放</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認支撐阻力">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認支撐阻力</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認供需區">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認供需區</span>
+          </div>
+        </div>
+      </div>
+      <div class="card green">
+        <div class="card-title"><span class="icon">≋</span>4H圖細項</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="確認價格再也跌不下去">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認價格再也跌不下去</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="反轉型態K棒(4H)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">反轉型態K棒</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="長影線(4H)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">長影線</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 動能回調招式 -->
+    <div class="card" style="margin-top:12px; border-left: 3px solid var(--accent)">
+      <div class="card-title"><span class="icon">🛡</span>動能回調招式</div>
+      <div class="check-group">
+        <div class="check-item" onclick="toggle(this)" data-label="價格回調至ema50：一式">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">價格回調至ema50：一式</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="價格在ema50上方：二式">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">價格在ema50上方：二式 📈</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="價格在ema50下方：三式">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">價格在ema50下方：三式</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 1H -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#7eb8c8"></div><span>Phase 04 — 1H Chart</span></div>
+    <div class="grid2">
+      <div class="card blue">
+        <div class="card-title"><span class="icon">≋</span>1H圖核心條件</div>
+        <div class="check-group">
+          <div class="check-item required" onclick="toggle(this)" data-label="確認價格在1H的ema50上方">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認價格在1H的ema50上方</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認有強動能釋放(1H)">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認有強動能釋放</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認供需區(1H)">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認供需區</span>
+          </div>
+        </div>
+      </div>
+      <div class="card blue">
+        <div class="card-title"><span class="icon">≋</span>1H圖細項</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="價格回調至ema50(1H)">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">價格回調至ema50</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="確認價格再也跌不下去(1H)">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">確認價格再也跌不下去</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="反轉型態K棒(1H)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">反轉型態K棒</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="長影線(1H)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">長影線</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 動能回流確認後 -->
+    <div class="card" style="margin-top:12px; border-left: 3px solid var(--check-yes)">
+      <div class="card-title"><span class="icon">＋</span>動能回流確認後</div>
+      <div class="check-group">
+        <div class="check-item" onclick="toggle(this)" data-label="劃定可能進場區間">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">劃定可能進場區間</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="設定警訊(1H)">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">設定警訊</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 5m -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#c8a96e"></div><span>Phase 05 — 5M Entry</span></div>
+    <div class="grid2">
+      <div class="card amber">
+        <div class="card-title"><span class="icon">〜</span>5m圖找尋進場點</div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggle(this)" data-label="高勝率型態（一）">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">高勝率型態（一）</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="強動能釋放(一)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">強動能釋放</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="價格回調到order block">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">價格回調到order block</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="check-item" onclick="toggle(this)" data-label="高勝率型態（二）">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">高勝率型態（二）</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="強動能釋放(二)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">強動能釋放</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="OTE進場模型，價格回調至68%或79%">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">OTE進場模型，68%或79%</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="check-item" onclick="toggle(this)" data-label="高勝率型態（三）">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">高勝率型態（三）</span>
+          </div>
+          <div class="check-group check-sub">
+            <div class="check-item" onclick="toggle(this)" data-label="強動能釋放(三)">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">強動能釋放</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="衝破支/阻位">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">衝破支/阻位</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="價格慢慢回調到支/阻位">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">價格慢慢回調到支/阻位</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <!-- 共識 -->
+        <div class="card" style="border-left:3px solid var(--accent3)">
+          <div class="card-title" style="font-size:13px"><span class="icon">🎯</span>共識確認</div>
+          <div class="check-group">
+            <div class="check-item required" onclick="toggle(this)" data-label="是否有2個以上的共識">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label">是否有2個以上的共識</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他入場型態 -->
+        <div class="card amber">
+          <div class="card-title" style="font-size:13px"><span class="icon">＋</span>其他入場型態</div>
+          <div class="check-group">
+            <div class="check-item" onclick="toggle(this)" data-label="價格回調到ema50">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">價格回調到ema50</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="pivots">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">pivots</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="支阻轉換">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">支阻轉換</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="圖形：雙頂/雙底">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">雙頂/雙底</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="圖形：頭肩型">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">頭肩型</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="趨勢線破壞">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">趨勢線破壞</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="亞歐盤：歐盤對亞盤做出假突破">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">歐盤對亞盤做出假突破</span>
+            </div>
+            <div class="check-item" onclick="toggle(this)" data-label="亞歐盤：強動能釋放後等不到回調">
+              <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="check-label" style="font-size:12px">強動能後等不到回調，飛回</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 下單 -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#c87e7e"></div><span>Phase 06 — Order</span></div>
+    <div class="card red">
+      <div class="card-title"><span class="icon">💵</span>下單</div>
+      <div class="check-group">
+        <div class="check-item required" onclick="toggle(this)" data-label="問「這是你願意冒風險的交易嗎？」">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">問「這是你願意冒風險的交易嗎？」</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="計算倉位大小">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">計算倉位大小</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="設定一致虧損風險">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">設定一致虧損風險</span>
+        </div>
+        <div class="check-item required" onclick="toggle(this)" data-label="確認RR>3">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">確認RR&gt;3</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="設定S/L">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">設定S/L</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="設定T/P">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">設定T/P</span>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="持倉管理">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">持倉管理</span>
+        </div>
+        <div class="check-group check-sub">
+          <div class="check-item" onclick="toggle(this)" data-label="1R或1個結構，砍0.5R風險">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label" style="font-size:12px">1R或1個結構，砍0.5R風險</span>
+          </div>
+          <div class="check-item" onclick="toggle(this)" data-label="2R，平價保護">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label" style="font-size:12px">2R，平價保護</span>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)" data-label="設定警訊(下單)">
+          <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="check-label">設定警訊</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 記錄交易 -->
+  <section>
+    <div class="phase-label"><div class="dot" style="background:#9e7ec8"></div><span>Phase 07 — Trade Journal</span></div>
+    <div class="card" style="border-left:3px solid #9e7ec8">
+      <div class="card-title"><span class="icon">≡</span>記錄交易</div>
+
+      <!-- Entry -->
+      <div style="margin-bottom:16px">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:0.1em; margin-bottom:8px">▶ ENTRY</div>
+        <div class="check-group" style="margin-bottom:10px">
+          <div class="check-item" onclick="toggle(this)" data-label="進場截圖已存">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">進場截圖</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label required-label">進場情緒 *</span>
+          <textarea class="field-input" id="entryEmotion" rows="2" placeholder="描述進場時的情緒狀態..."></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Keep -->
+      <div style="margin: 16px 0">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent2); letter-spacing:0.1em; margin-bottom:8px">⟳ KEEP</div>
+        <div class="field-row">
+          <span class="field-label">持倉情緒</span>
+          <textarea class="field-input" id="keepEmotion" rows="2" placeholder="持倉過程中的想法..."></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Close -->
+      <div style="margin-top:16px">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--check-yes); letter-spacing:0.1em; margin-bottom:8px">■ CLOSE</div>
+        <div class="check-group" style="margin-bottom:10px">
+          <div class="check-item" onclick="toggle(this)" data-label="出場截圖已存">
+            <div class="check-box"><svg viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="check-label">出場截圖</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label required-label">出場情緒 *</span>
+          <textarea class="field-input" id="closeEmotion" rows="2" placeholder="描述出場時的情緒與反思..."></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+<section class="history-section">
+    <div class="phase-label"><div class="dot" style="background:var(--text-muted)"></div><span>Archives — History Logs</span></div>
+    <div class="history-list" id="historyList">
+      </div>
+    <div class="detail-view" id="detailView"></div>
+  </section>
+
+</main>
+
+<div class="bottom-bar">
+  <button class="btn-reset" onclick="resetAll()">↺ 重置</button>
+  <button class="btn-setup" id="btnSetupDir" onclick="selectDefaultDirectory()" title="設定預設存檔目錄">📁 目錄</button>
+  <button class="btn-save" onclick="saveRecordWithFile()">儲存紀錄 & 存檔 MD</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── IndexedDB 及路徑儲存 ──
+const dbName = "TradeLogStore";
+const storeName = "handles";
+
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName);
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function saveHandle(key, handle) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readwrite");
+            tx.objectStore(storeName).put(handle, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn("IndexedDB error", e);
+    }
+}
+
+async function getHandle(key) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readonly");
+            const request = tx.objectStore(storeName).get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.warn("IndexedDB error", e);
+        return null;
+    }
+}
+
+async function selectDefaultDirectory() {
+    try {
+        const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await saveHandle("defaultDir", dirHandle);
+        showToast("已設定預設儲存路徑", "success");
+        return dirHandle;
+    } catch (err) {
+        if (err.name !== "AbortError") {
+            console.error(err);
+            showToast("無法設定路徑：" + err.message, "error");
+        }
+        return null;
+    }
+}
+
+// ── 基礎邏輯 ──
+function toggle(el) {
+  el.classList.toggle('checked');
+  updateProgress();
+}
+
+function updateProgress() {
+  const all = document.querySelectorAll('.check-item');
+  const checked = document.querySelectorAll('.check-item.checked');
+  const pct = all.length ? Math.round(checked.length / all.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = checked.length + '/' + all.length;
+}
+
+function resetAll() {
+  if (!confirm('確定要重置所有勾選？')) return;
+  document.querySelectorAll('.check-item.checked').forEach(el => el.classList.remove('checked'));
+  document.getElementById('symbolInput').value = '';
+  document.getElementById('entryEmotion').value = '';
+  document.getElementById('keepEmotion').value = '';
+  document.getElementById('closeEmotion').value = '';
+  document.getElementById('detailView').style.display = 'none';
+  updateProgress();
+}
+
+// ── 產生 MARKDOWN ──
+function buildMarkdown() {
+  const symbol = (document.getElementById('symbolInput').value || 'UNKNOWN').toUpperCase();
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  const timeStr = now.toTimeString().slice(0, 5);
+
+  let md = `# ${symbol} — ${dateStr} ${timeStr}\n\n`;
+  md += `> **商品**：${symbol}　**日期**：${dateStr}\n\n---\n\n`;
+
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    const titleEl = card.querySelector('.card-title');
+    if (!titleEl) return;
+    const title = titleEl.textContent.trim().replace(/^[^\w\u4e00-\u9fff]+/, '');
+    const items = card.querySelectorAll('.check-item');
+    
+    if (items.length > 0) {
+        md += `## ${title}\n\n`;
+        items.forEach(item => {
+            const isChecked = item.classList.contains('checked');
+            const label = item.getAttribute('data-label') || '';
+            md += `- [${isChecked ? 'x' : ' '}] ${label}\n`;
+        });
+        md += '\n';
+    }
+  });
+
+  md += `## 交易紀錄\n\n`;
+  md += `**進場情緒**：${document.getElementById('entryEmotion').value || '（未填）'}\n`;
+  md += `**持倉情緒**：${document.getElementById('keepEmotion').value || '（未填）'}\n`;
+  md += `**出場情緒**：${document.getElementById('closeEmotion').value || '（未填）'}\n\n`;
+  md += `---\n_Generated by Local Trade Log_\n`;
+
+  return { md, symbol, dateStr, timeStr };
+}
+
+// ── 歷史紀錄管理 ──
+let historyData = JSON.parse(localStorage.getItem('trade_history') || '[]');
+
+function saveRecord() {
+  saveRecordWithFile();
+}
+
+async function saveRecordWithFile() {
+  const symbol = document.getElementById('symbolInput').value.trim();
+  if (!symbol) {
+    showToast('請輸入商品名稱', 'error');
+    return;
+  }
+
+  const { md, dateStr, timeStr } = buildMarkdown();
+  
+  // 紀錄當前狀態以便編輯回填
+  const currentState = {
+    symbol: symbol,
+    emotions: {
+        entry: document.getElementById('entryEmotion').value,
+        keep: document.getElementById('keepEmotion').value,
+        close: document.getElementById('closeEmotion').value
+    },
+    checkedIndices: Array.from(document.querySelectorAll('.check-item')).map(el => el.classList.contains('checked')),
+    markdown: md,
+    timestamp: `${dateStr} ${timeStr}`
+  };
+
+  historyData.unshift(currentState);
+  localStorage.setItem('trade_history', JSON.stringify(historyData));
+  renderHistory();
+
+  // 嘗試儲存成實體檔案
+  const filename = `${symbol}_${dateStr}_${timeStr.replace(':', '')}.md`;
+  let savedToFile = false;
+
+  if ('showDirectoryPicker' in window) {
+      try {
+          let dirHandle = await getHandle("defaultDir");
+          if (!dirHandle) {
+              dirHandle = await selectDefaultDirectory();
+          }
+          
+          if (dirHandle) {
+              // 檢查與請求權限
+              let perm = await dirHandle.queryPermission({ mode: "readwrite" });
+              if (perm !== "granted") {
+                  perm = await dirHandle.requestPermission({ mode: "readwrite" });
+              }
+              if (perm !== "granted") {
+                  // 權限被拒，清除舊 handle 讓下次重新選目錄
+                  await saveHandle("defaultDir", null);
+                  throw new Error("Permission denied");
+              }
+              const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+              const writable = await fileHandle.createWritable();
+              // 明確使用 WriteParams 格式，確保內容正確寫入
+              await writable.write({ type: "write", data: md });
+              await writable.close();
+              showToast("已存入歷史並儲存至預設路徑", "success");
+              savedToFile = true;
+          }
+      } catch (err) {
+          console.error("Direct save failed", err);
+      }
+  }
+
+  // Fallback 儲存機制（手機或未支援 API、未選擇目錄時）
+  if (!savedToFile) {
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("已存入歷史並觸發下載", "success");
+  }
+
+  // 背景複製到剪貼簿 (避免錯誤，不阻擋後續)
+  navigator.clipboard.writeText(md).catch(e => console.log('Clipboard save failed', e));
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  container.innerHTML = '';
+
+  historyData.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.onclick = () => showDetail(index);
+    div.innerHTML = `
+      <div class="history-info">
+        <span class="history-symbol">${item.symbol}</span>
+        <span class="history-date">${item.timestamp}</span>
+      </div>
+      <div class="history-actions">
+        <button class="action-btn" onclick="copyItem(event, ${index})">複製</button>
+        <button class="action-btn" onclick="editItem(event, ${index})">編輯</button>
+        <button class="action-btn del" onclick="deleteItem(event, ${index})">刪除</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function showDetail(index) {
+    const view = document.getElementById('detailView');
+    view.textContent = historyData[index].markdown;
+    view.style.display = 'block';
+    view.scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteItem(e, index) {
+    e.stopPropagation();
+    if(!confirm('刪除這筆紀錄？')) return;
+    historyData.splice(index, 1);
+    localStorage.setItem('trade_history', JSON.stringify(historyData));
+    document.getElementById('detailView').style.display = 'none';
+    renderHistory();
+}
+
+function copyItem(e, index) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(historyData[index].markdown);
+    showToast('內容已複製', 'success');
+}
+
+function editItem(e, index) {
+    e.stopPropagation();
+    const data = historyData[index];
+    if(!confirm('將此紀錄回填至上方表單編輯？')) return;
+
+    document.getElementById('symbolInput').value = data.symbol;
+    document.getElementById('entryEmotion').value = data.emotions.entry;
+    document.getElementById('keepEmotion').value = data.emotions.keep;
+    document.getElementById('closeEmotion').value = data.emotions.close;
+
+    const allChecks = document.querySelectorAll('.check-item');
+    data.checkedIndices.forEach((checked, i) => {
+        if(allChecks[i]) {
+            if(checked) allChecks[i].classList.add('checked');
+            else allChecks[i].classList.remove('checked');
+        }
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    updateProgress();
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  setTimeout(() => t.className = '', 2500);
+}
+
+// ── 初始化 ──
+if ('showDirectoryPicker' in window) {
+    document.getElementById('btnSetupDir').style.display = 'inline-block';
+    // 頁面載入時預檢目錄權限狀態
+    (async () => {
+        try {
+            const dirHandle = await getHandle("defaultDir");
+            if (dirHandle) {
+                const perm = await dirHandle.queryPermission({ mode: "readwrite" });
+                if (perm === "granted") {
+                    document.getElementById('btnSetupDir').title = "✓ 目錄已就緒：" + (dirHandle.name || "已選擇");
+                    document.getElementById('btnSetupDir').style.color = 'var(--check-yes)';
+                } else {
+                    // 需要重新授權，改變按鈕顏色提示
+                    document.getElementById('btnSetupDir').title = "⚠ 目錄需要重新授權，請點擊";
+                    document.getElementById('btnSetupDir').style.borderColor = 'var(--accent)';
+                }
+            }
+        } catch(e) { /* ignore */ }
+    })();
+}
+
+renderHistory();
+updateProgress();
+
+/* Obsidian 部分已註解
+async function saveToObsidian() {
+    // 原始 API 邏輯已停用
+}
+*/
+</script>
+</body>
+</html>
